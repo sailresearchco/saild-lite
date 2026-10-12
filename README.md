@@ -5,9 +5,23 @@ Use this system with trusted operators. It does not support Windows or productio
 
 ## Start
 
+In the repository directory, install the tools and CLI:
+
 ```sh
 just setup
 ```
+
+If `just` is absent, run `bash scripts/setup.sh` instead. Use macOS or Linux. On Windows, use WSL.
+Open a new terminal to use the updated PATH. Return to the repository directory.
+Configure an AWS profile. Then create the host:
+
+```sh
+pulumi login
+AWS_PROFILE=your-profile just provision
+just tunnel
+```
+
+Keep the tunnel open. In another terminal, run `sail-lite tui` to create and control VMs.
 
 ## Deploy and test
 
@@ -16,10 +30,8 @@ just setup
 ```sh
 just redeploy                        # Build, replace binaries, and reset VM state.
 just test                            # Run local tests.
-SAILD_ADDR=127.0.0.1:50051 just smoke # Test an empty host through the tunnel.
 ```
 
-The host test checks RAM, process IDs, disk copies, command output, and resource counts.
 Redeploy updates the guest agent and init script. To apply Dockerfile changes, stop the service.
 Remove `/opt/saild-lite/assets/default.ext4`. Then run `just bootstrap`.
 

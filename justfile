@@ -42,6 +42,3 @@ ssh:
 
 destroy:
     cd infra && pulumi destroy --yes
-
-smoke:
-    go test -tags smoke ./tests -v -count=1
