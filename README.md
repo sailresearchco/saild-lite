@@ -23,6 +23,9 @@ just tunnel
 
 Keep the tunnel open. In another terminal, run `sail-lite tui` to create and control VMs.
 
+Provisioning creates an EC2 `c8i.xlarge` in `us-west-2`. AWS charges apply.
+By default, a timer terminates the host after 24 hours. The default timer does not survive a reboot.
+
 ## Deploy and test
 
 **A deployment or service restart deletes all VMs and checkpoints.**
@@ -36,23 +39,6 @@ Redeploy updates the guest agent and init script. To apply Dockerfile changes, s
 Remove `/opt/saild-lite/assets/default.ext4`. Then run `just bootstrap`.
 
 To read service logs, run `just ssh`. Then run `sudo journalctl -u saild-lite -n 100`.
-
-## Use another host
-
-Use Ubuntu 24.04 on x86-64 with systemd, `/dev/kvm`, internet access, and passwordless sudo.
-If the host is a VM, enable nested virtualization.
-
-```sh
-export SAILD_HOST=your-host
-export SAILD_USER=ubuntu
-export SAILD_SSH_KEY="$HOME/.ssh/your-key"
-just bootstrap
-just tunnel
-```
-
-These settings replace the values in `artifacts/host.json`. Deployment uses SSH. It does not require AWS.
-The [Pulumi example](infra/Pulumi.yaml) creates a `c8i.xlarge` host in `us-west-2`. AWS charges apply.
-By default, a timer terminates that host after 24 hours. The default timer does not survive a reboot.
 Use `AWS_PROFILE=your-profile just destroy` to remove all cloud resources for the stack.
 
 ## Architecture
@@ -74,7 +60,7 @@ State stays in memory and on local disks. There is no database or shared storage
 ## API
 
 The host exposes gRPC at `127.0.0.1:50051`. Use the SSH tunnel for access.
-Set `SAILD_ADDR` to select another address. There is no REST API or gRPC authentication.
+There is no REST API or gRPC authentication.
 The [protobuf file](proto/saild.proto) defines all fields. This reduced API is not compatible with the full production API.
 
 | Service | RPC | Function |
