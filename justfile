@@ -5,9 +5,12 @@ default:
 
 build:
     mkdir -p bin
-    go build -o bin/sail ./cmd/sail
+    go build -o bin/sail-lite ./cmd/sail-lite
     GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o bin/saild-linux ./cmd/saild
     GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o bin/guest-agent-linux ./cmd/guest-agent
+
+install:
+    go install ./cmd/sail-lite
 
 test:
     go test -race ./...

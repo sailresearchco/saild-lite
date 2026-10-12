@@ -41,9 +41,9 @@ def main():
         raise SystemExit("usage: deploy.py bootstrap|redeploy|tunnel|ssh")
     (ROOT / "bin").mkdir(exist_ok=True)
     env = dict(os.environ, GOOS="linux", GOARCH="amd64", CGO_ENABLED="0")
-    for name in ("saild", "guest-agent", "sail"):
+    for name in ("saild", "guest-agent", "sail-lite"):
         run(["go", "build", "-trimpath", "-o", f"bin/{name}-linux", f"./cmd/{name}"], env=env)
-    run(["go", "build", "-trimpath", "-o", "bin/sail", "./cmd/sail"])
+    run(["go", "install", "-trimpath", "./cmd/sail-lite"])
     if mode == "bootstrap":
         deadline = time.monotonic() + 600
         while True:
@@ -58,7 +58,7 @@ def main():
     stage = "/tmp/saild-lite-upload-" + uuid.uuid4().hex
     run([*ssh, shlex.join(["mkdir", "-m", "700", stage])])
     try:
-        files = ["bin/saild-linux", "bin/guest-agent-linux", "bin/sail-linux",
+        files = ["bin/saild-linux", "bin/guest-agent-linux", "bin/sail-lite-linux",
                  "guest/Dockerfile", "guest/init", "deploy/saild-lite.service",
                  "scripts/remote-deploy.sh", "deploy/artifacts.env"]
         run(["scp", *opts, *files, f"{destination}:{stage}/"])

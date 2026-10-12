@@ -44,7 +44,7 @@ func newID(prefix string) string {
 	return prefix + "-" + hex.EncodeToString(b)
 }
 func run(args []string) error {
-	flags := flag.NewFlagSet("sail", flag.ContinueOnError)
+	flags := flag.NewFlagSet("sail-lite", flag.ContinueOnError)
 	defaultAddr := os.Getenv("SAILD_ADDR")
 	if defaultAddr == "" {
 		defaultAddr = "127.0.0.1:50051"
@@ -55,7 +55,7 @@ func run(args []string) error {
 	}
 	args = flags.Args()
 	if len(args) == 0 {
-		return fmt.Errorf("usage: sail [--addr HOST:PORT] create|list|stop|fork|checkpoint|restore|exec|shell|tui")
+		return fmt.Errorf("usage: sail-lite [--addr HOST:PORT] create|list|stop|fork|checkpoint|restore|exec|shell|tui")
 	}
 	conn, err := grpc.NewClient(*addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -109,7 +109,7 @@ func command(conn *grpc.ClientConn, args []string) error {
 		return nil
 	case "stop":
 		if len(args) != 2 {
-			return errors.New("usage: sail stop SAILBOX_ID")
+			return errors.New("usage: sail-lite stop SAILBOX_ID")
 		}
 		v, e := c.GetWorkerState(ctx, &api.Empty{})
 		if e != nil {
@@ -124,7 +124,7 @@ func command(conn *grpc.ClientConn, args []string) error {
 		return fmt.Errorf("sailbox %q not found", args[1])
 	case "fork", "restore":
 		if len(args) < 2 || len(args) > 3 {
-			return fmt.Errorf("usage: sail %s SOURCE [NEW_SAILBOX_ID]", args[0])
+			return fmt.Errorf("usage: sail-lite %s SOURCE [NEW_SAILBOX_ID]", args[0])
 		}
 		id := newID("sb")
 		if len(args) == 3 {
@@ -138,7 +138,7 @@ func command(conn *grpc.ClientConn, args []string) error {
 		return printVM(v, e)
 	case "checkpoint":
 		if len(args) != 2 {
-			return errors.New("usage: sail checkpoint SAILBOX_ID")
+			return errors.New("usage: sail-lite checkpoint SAILBOX_ID")
 		}
 		v, e := c.CheckpointFirecrackerVM(ctx, &api.CheckpointFirecrackerVMRequest{SailboxId: args[1]})
 		if e != nil {
@@ -148,7 +148,7 @@ func command(conn *grpc.ClientConn, args []string) error {
 		return nil
 	case "exec", "shell":
 		if len(args) < 2 {
-			return errors.New("usage: sail exec ID -- COMMAND [ARGS...] | sail shell ID")
+			return errors.New("usage: sail-lite exec ID -- COMMAND [ARGS...] | sail-lite shell ID")
 		}
 		argv := args[2:]
 		isShell := args[0] == "shell"
@@ -279,7 +279,7 @@ func tui(conn *grpc.ClientConn, addr string) error {
 	fmt.Println("saild-lite — create | list | fork ID | stop ID | shell ID | checkpoint ID | restore CP | quit")
 	reader := bufio.NewReader(os.Stdin)
 	for {
-		fmt.Print("sail> ")
+		fmt.Print("sail-lite> ")
 		line, err := reader.ReadString('\n')
 		if err != nil {
 			return err

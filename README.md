@@ -11,6 +11,7 @@ To create an AWS host, also install AWS CLI and Pulumi. Configure access to both
 ```sh
 git clone git@github.com:sailresearchco/saild-lite.git
 cd saild-lite
+just install
 AWS_PROFILE=your-profile just provision
 just tunnel
 ```
@@ -19,16 +20,17 @@ For an existing deployment, start with `just tunnel`. Keep this terminal open.
 In a second terminal, open the same directory. Run these commands:
 
 ```sh
-bin/sail create --id parent
-bin/sail exec parent -- uname -a
-bin/sail shell parent                 # Type exit to leave the shell.
-bin/sail fork parent child
-bin/sail list
-bin/sail stop child
-bin/sail stop parent
+export PATH="$(go env GOPATH)/bin:$PATH"
+sail-lite create --id parent
+sail-lite exec parent -- uname -a
+sail-lite shell parent                 # Type exit to leave the shell.
+sail-lite fork parent child
+sail-lite list
+sail-lite stop child
+sail-lite stop parent
 ```
 
-Use `bin/sail tui` to open the command prompt.
+Use `sail-lite tui` to open the command prompt.
 
 ## Deploy and test
 
@@ -66,7 +68,7 @@ Use `AWS_PROFILE=your-profile just destroy` to remove all cloud resources for th
 
 ## Architecture
 
-`sail` → gRPC through SSH → `saild` → gRPC through vsock → `guest-agent` → command process.
+`sail-lite` → gRPC through SSH → `saild` → gRPC through vsock → `guest-agent` → command process.
 
 | Code | Function |
 | --- | --- |

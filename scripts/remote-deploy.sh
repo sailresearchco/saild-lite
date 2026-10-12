@@ -51,7 +51,7 @@ else
 fi
 
 install -m 0755 "$stage/saild-linux" "$prefix/saild.next"
-install -m 0755 "$stage/sail-linux" "$prefix/sail.next"
+install -m 0755 "$stage/sail-lite-linux" "$prefix/sail-lite.next"
 if systemctl cat saild-lite.service >/dev/null 2>&1; then
   systemctl stop saild-lite.service
 fi
@@ -59,7 +59,8 @@ fi
 "$prefix/saild.next" reset
 if [[ -f "$prefix/saild" ]]; then cp "$prefix/saild" "$prefix/saild.previous"; fi
 mv "$prefix/saild.next" "$prefix/saild"
-mv "$prefix/sail.next" "$prefix/sail"
+mv "$prefix/sail-lite.next" "$prefix/sail-lite"
+ln -sfn "$prefix/sail-lite" /usr/local/bin/sail-lite
 mv "$candidate" "$prefix/assets/default.ext4"
 if [[ -f "$prefix/firecracker.next" ]]; then mv "$prefix/firecracker.next" "$prefix/firecracker"; fi
 if [[ -f "$prefix/assets/vmlinux.next" ]]; then mv "$prefix/assets/vmlinux.next" "$prefix/assets/vmlinux"; fi
@@ -70,7 +71,7 @@ install -m 0644 "$stage/saild-lite.service" /etc/systemd/system/saild-lite.servi
 systemctl daemon-reload
 systemctl enable --now saild-lite.service
 for attempt in $(seq 1 30); do
-  if "$prefix/sail" list --json; then
+  if "$prefix/sail-lite" list --json; then
     echo 'saild-lite deployed; VM accounting is empty'
     exit 0
   fi
