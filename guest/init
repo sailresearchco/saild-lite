@@ -1,0 +1,17 @@
+#!/bin/sh
+set -eu
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+mount -t proc proc /proc
+mount -t sysfs sysfs /sys
+mountpoint -q /dev || mount -t devtmpfs devtmpfs /dev
+mkdir -p /dev/pts /dev/shm /run /tmp
+mount -t devpts devpts /dev/pts
+mount -t tmpfs -o mode=1777 tmpfs /dev/shm
+mount -t tmpfs tmpfs /run
+chmod 1777 /tmp
+ip link set lo up
+ip link set eth0 up
+ip addr add 172.30.0.2/24 dev eth0
+ip route add default via 172.30.0.1
+printf 'nameserver 1.1.1.1\n' > /etc/resolv.conf
+exec /usr/bin/tini -- /usr/local/bin/guest-agent

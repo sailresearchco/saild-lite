@@ -1,0 +1,111 @@
+name: saild-lite
+runtime: yaml
+description: Disposable standalone saild host; no dependency on Sail infrastructure.
+config:
+  publicKey:
+    type: string
+  sshCidr:
+    type: string
+  instanceType:
+    type: string
+    default: c8i.xlarge
+variables:
+  image:
+    fn::invoke:
+      function: aws:ec2:getAmi
+      arguments:
+        mostRecent: true
+        owners: ["099720109477"]
+        filters:
+          - name: name
+            values: ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"]
+resources:
+  provider:
+    type: pulumi:providers:aws
+    options:
+      version: 7.46.0
+  network:
+    type: aws:ec2:Vpc
+    properties:
+      cidrBlock: 10.89.0.0/24
+      enableDnsHostnames: true
+      tags: {Name: saild-lite}
+    options: {provider: "${provider}"}
+  gateway:
+    type: aws:ec2:InternetGateway
+    properties: {vpcId: "${network.id}"}
+    options: {provider: "${provider}"}
+  subnet:
+    type: aws:ec2:Subnet
+    properties:
+      vpcId: ${network.id}
+      cidrBlock: 10.89.0.0/24
+      mapPublicIpOnLaunch: true
+    options: {provider: "${provider}"}
+  routes:
+    type: aws:ec2:RouteTable
+    properties:
+      vpcId: ${network.id}
+      routes:
+        - cidrBlock: 0.0.0.0/0
+          gatewayId: ${gateway.id}
+    options: {provider: "${provider}"}
+  routeAssociation:
+    type: aws:ec2:RouteTableAssociation
+    properties: {subnetId: "${subnet.id}", routeTableId: "${routes.id}"}
+    options: {provider: "${provider}"}
+  firewall:
+    type: aws:ec2:SecurityGroup
+    properties:
+      vpcId: ${network.id}
+      description: SSH from the operator only; gRPC stays on loopback
+      ingress:
+        - protocol: tcp
+          fromPort: 22
+          toPort: 22
+          cidrBlocks: ["${sshCidr}"]
+      egress:
+        - protocol: "-1"
+          fromPort: 0
+          toPort: 0
+          cidrBlocks: [0.0.0.0/0]
+    options: {provider: "${provider}"}
+  key:
+    type: aws:ec2:KeyPair
+    properties: {publicKey: "${publicKey}"}
+    options: {provider: "${provider}"}
+  host:
+    type: aws:ec2:Instance
+    properties:
+      ami: ${image.id}
+      instanceType: ${instanceType}
+      cpuOptions: {nestedVirtualization: enabled}
+      subnetId: ${subnet.id}
+      keyName: ${key.keyName}
+      vpcSecurityGroupIds: ["${firewall.id}"]
+      associatePublicIpAddress: true
+      metadataOptions: {httpTokens: required, httpPutResponseHopLimit: 1}
+      rootBlockDevice: {volumeSize: 80, volumeType: gp3, encrypted: true, deleteOnTermination: true}
+      instanceInitiatedShutdownBehavior: terminate
+      tags: {Name: saild-lite, Purpose: disposable-saild-development}
+      userData: |
+        #!/bin/bash
+        set -euxo pipefail
+        export DEBIAN_FRONTEND=noninteractive
+        apt-get update
+        apt-get install -y docker.io iproute2 iptables e2fsprogs curl ca-certificates python3
+        systemctl enable --now docker
+        modprobe kvm_intel
+        test -c /dev/kvm
+        mkdir -p /opt/saild-lite/assets /var/lib/saild-lite
+        echo 'SAILD_CPUS=4' > /etc/default/saild-lite
+        echo 'SAILD_MEMORY_MIB=4096' >> /etc/default/saild-lite
+        # Disposable by default. Remove this timer explicitly to retain a host.
+        systemd-run --unit=saild-lite-expiry --on-active=24h /sbin/shutdown -h now
+    options:
+      provider: ${provider}
+      dependsOn: ["${routeAssociation}"]
+outputs:
+  host: ${host.publicIp}
+  instanceId: ${host.id}
+  sshUser: ubuntu

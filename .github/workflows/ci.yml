@@ -1,0 +1,24 @@
+name: CI
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Formatting
+        run: test -z "$(gofmt -l api cmd internal tests)"
+      - name: Unit and process tests
+        run: go test -race ./...
+      - name: Linux binaries
+        run: CGO_ENABLED=0 go build ./...
+      - name: Deployment script syntax
+        run: |
+          bash -n scripts/remote-deploy.sh
+          sh -n guest/init
+          python3 -m py_compile scripts/*.py

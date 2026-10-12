@@ -6,3 +6,4 @@
 /.env
 /artifacts/
 *.log
+__pycache__/

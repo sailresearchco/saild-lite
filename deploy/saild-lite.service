@@ -1,0 +1,21 @@
+[Unit]
+Description=Standalone saild VM host
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/default/saild-lite
+ExecStartPre=/opt/saild-lite/saild reset
+ExecStart=/opt/saild-lite/saild --cpus ${SAILD_CPUS} --memory ${SAILD_MEMORY_MIB}
+ExecStopPost=/opt/saild-lite/saild reset
+KillMode=control-group
+TimeoutStopSec=20
+SendSIGKILL=yes
+Restart=on-failure
+RestartSec=2
+LimitNOFILE=65536
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target
