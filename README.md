@@ -5,13 +5,15 @@ Use this system with trusted operators. It does not support Windows or productio
 
 ## Start
 
-Install Go 1.25+, Python 3, OpenSSH, and [just](https://github.com/casey/just).
-To create an AWS host, also install AWS CLI and Pulumi. Configure access to both services.
+Get a copy of this repository. Open its directory.
+Run `just setup` to install the tools and CLI. If `just` is absent, run `bash scripts/setup.sh`.
+Setup supports macOS, Ubuntu/Debian, and Fedora/RHEL on x86-64 or ARM64. On Windows, use WSL.
+It installs Go, Python, SSH, `just`, AWS CLI, and Pulumi. System package installation can require your administrator password.
+Setup configures PATH for Bash and Zsh. Open a new terminal after setup.
+Configure AWS access. Run `pulumi login` before you create a host.
 
 ```sh
-git clone git@github.com:sailresearchco/saild-lite.git
 cd saild-lite
-just install
 AWS_PROFILE=your-profile just provision
 just tunnel
 ```
@@ -20,7 +22,6 @@ For an existing deployment, start with `just tunnel`. Keep this terminal open.
 In a second terminal, open the same directory. Run these commands:
 
 ```sh
-export PATH="$(go env GOPATH)/bin:$PATH"
 sail-lite create --id parent
 sail-lite exec parent -- uname -a
 sail-lite shell parent                 # Type exit to leave the shell.

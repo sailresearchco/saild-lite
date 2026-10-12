@@ -43,7 +43,10 @@ def main():
     env = dict(os.environ, GOOS="linux", GOARCH="amd64", CGO_ENABLED="0")
     for name in ("saild", "guest-agent", "sail-lite"):
         run(["go", "build", "-trimpath", "-o", f"bin/{name}-linux", f"./cmd/{name}"], env=env)
-    run(["go", "install", "-trimpath", "./cmd/sail-lite"])
+    cli_bin = Path.home() / ".local" / "bin"
+    cli_bin.mkdir(parents=True, exist_ok=True)
+    run(["go", "install", "-trimpath", "./cmd/sail-lite"],
+        env=dict(os.environ, GOBIN=str(cli_bin)))
     if mode == "bootstrap":
         deadline = time.monotonic() + 600
         while True:

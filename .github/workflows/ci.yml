@@ -20,5 +20,6 @@ jobs:
       - name: Deployment script syntax
         run: |
           bash -n scripts/remote-deploy.sh
+          bash -n scripts/setup.sh
           sh -n guest/init
           python3 -m py_compile scripts/*.py

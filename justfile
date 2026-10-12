@@ -3,6 +3,9 @@ set dotenv-load := true
 default:
     @just --list
 
+setup:
+    bash scripts/setup.sh
+
 build:
     mkdir -p bin
     go build -o bin/sail-lite ./cmd/sail-lite
@@ -10,7 +13,8 @@ build:
     GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o bin/guest-agent-linux ./cmd/guest-agent
 
 install:
-    go install ./cmd/sail-lite
+    mkdir -p "$HOME/.local/bin"
+    GOBIN="$HOME/.local/bin" go install ./cmd/sail-lite
 
 test:
     go test -race ./...
