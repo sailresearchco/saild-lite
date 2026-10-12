@@ -5,33 +5,9 @@ Use this system with trusted operators. It does not support Windows or productio
 
 ## Start
 
-Get a copy of this repository. Open its directory.
-Run `just setup` to install the tools and CLI. If `just` is absent, run `bash scripts/setup.sh`.
-Setup supports macOS, Ubuntu/Debian, and Fedora/RHEL on x86-64 or ARM64. On Windows, use WSL.
-It installs Go, Python, SSH, `just`, AWS CLI, and Pulumi. System package installation can require your administrator password.
-Setup configures PATH for Bash and Zsh. Open a new terminal after setup.
-Configure AWS access. Run `pulumi login` before you create a host.
-
 ```sh
-cd saild-lite
-AWS_PROFILE=your-profile just provision
-just tunnel
+just setup
 ```
-
-For an existing deployment, start with `just tunnel`. Keep this terminal open.
-In a second terminal, open the same directory. Run these commands:
-
-```sh
-sail-lite create --id parent
-sail-lite exec parent -- uname -a
-sail-lite shell parent                 # Type exit to leave the shell.
-sail-lite fork parent child
-sail-lite list
-sail-lite stop child
-sail-lite stop parent
-```
-
-Use `sail-lite tui` to open the command prompt.
 
 ## Deploy and test
 
