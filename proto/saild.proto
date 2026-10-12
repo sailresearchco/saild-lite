@@ -1,0 +1,112 @@
+syntax = "proto3";
+package saild.v1;
+option go_package = "github.com/sailresearchco/saild-lite/api;api";
+
+// A standalone subset of saild's host-local control plane. Local image and
+// checkpoint paths replace production's image registry and object storage.
+service FirecrackerControlService {
+  rpc StartFirecrackerVM(StartFirecrackerVMRequest) returns (VM);
+  rpc StopFirecrackerVM(StopFirecrackerVMRequest) returns (Empty);
+  rpc CheckpointFirecrackerVM(CheckpointFirecrackerVMRequest) returns (Checkpoint);
+  rpc RestoreFirecrackerVMFromCheckpoint(RestoreFirecrackerVMFromCheckpointRequest) returns (VM);
+  rpc ForkFirecrackerVM(ForkFirecrackerVMRequest) returns (VM);
+  rpc GetWorkerState(Empty) returns (WorkerState);
+}
+
+service SailboxExecService {
+  rpc StreamExec(StartExec) returns (stream ExecServerFrame);
+  rpc WriteExecStdin(WriteExecStdinRequest) returns (Empty);
+  rpc ResizeExec(ResizeExecRequest) returns (Empty);
+  rpc CancelExec(CancelExecRequest) returns (Empty);
+}
+
+// Host-to-guest control. Exec uses SailboxExecService unchanged on both hops.
+// Rebind changes the identity for future commands; inherited processes retain
+// their existing environment and memory. It must not kill those processes.
+service GuestAgentService {
+  rpc Rebind(RebindRequest) returns (Empty);
+  rpc Sync(Empty) returns (Empty);
+  rpc Ping(Empty) returns (Identity);
+}
+
+message Empty {}
+message StartFirecrackerVMRequest {
+  string sailbox_id = 1;
+  uint32 vcpu_count = 2;
+  uint32 mem_size_mib = 3;
+  string image_id = 4;
+}
+message StopFirecrackerVMRequest { string vm_id = 1; }
+message CheckpointFirecrackerVMRequest { string sailbox_id = 1; }
+message RestoreFirecrackerVMFromCheckpointRequest {
+  string sailbox_id = 1;
+  string checkpoint_id = 2;
+}
+message ForkFirecrackerVMRequest {
+  string sailbox_id = 1;
+  string child_sailbox_id = 2;
+}
+message VM {
+  string sailbox_id = 1;
+  string vm_id = 2;
+  uint32 vcpu_count = 3;
+  uint32 mem_size_mib = 4;
+  string state = 5;
+  string image_id = 6;
+}
+message Checkpoint {
+  string checkpoint_id = 1;
+  string source_sailbox_id = 2;
+  uint32 vcpu_count = 3;
+  uint32 mem_size_mib = 4;
+}
+message WorkerState {
+  repeated VM vms = 1;
+  uint32 total_vcpus = 2;
+  uint32 total_memory_mib = 3;
+  uint32 reserved_vcpus = 4;
+  uint32 reserved_memory_mib = 5;
+}
+
+// Field numbers mirror the corresponding production exec request subset.
+message StartExec {
+  string sailbox_id = 1;
+  repeated string argv = 2;
+  uint32 timeout_seconds = 3;
+  string exec_request_id = 4;
+  int64 stdout_resume_seq = 5;
+  int64 stderr_resume_seq = 6;
+  bool open_stdin = 7;
+  bool pty = 8;
+  uint32 term_cols = 9;
+  uint32 term_rows = 10;
+  string term = 11;
+  map<string, string> env = 14;
+  string cwd = 19;
+}
+message Started {}
+message Chunk {
+  enum Stream { STREAM_UNSPECIFIED = 0; STREAM_STDOUT = 1; STREAM_STDERR = 2; }
+  Stream stream = 1;
+  bytes data = 2;
+  int64 seq = 3;
+}
+message Exit { int32 exit_code = 1; }
+message ExecServerFrame {
+  oneof frame { Started started = 1; Chunk chunk = 2; Exit exit = 3; }
+}
+message WriteExecStdinRequest {
+  string sailbox_id = 1;
+  string exec_request_id = 2;
+  bytes data = 3;
+  bool eof = 4;
+}
+message ResizeExecRequest {
+  string sailbox_id = 1;
+  string exec_request_id = 2;
+  uint32 term_cols = 3;
+  uint32 term_rows = 4;
+}
+message CancelExecRequest { string sailbox_id = 1; string exec_request_id = 2; }
+message RebindRequest { string sailbox_id = 1; bool fork = 2; }
+message Identity { string sailbox_id = 1; }

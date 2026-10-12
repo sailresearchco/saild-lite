@@ -1,0 +1,8 @@
+/bin/
+/.pulumi/
+/infra/node_modules/
+/infra/Pulumi.*.yaml
+!/infra/Pulumi.example.yaml
+/.env
+/artifacts/
+*.log
