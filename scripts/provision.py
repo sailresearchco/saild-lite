@@ -23,9 +23,9 @@ def main():
     key.parent.mkdir(exist_ok=True)
     if not key.exists():
         run("ssh-keygen", "-t", "ed25519", "-N", "", "-f", str(key))
-    stacks = json.loads(run("pulumi", "stack", "ls", "--json", capture=True))
-    names = [s["name"].split("/")[-1] for s in stacks]
-    run("pulumi", "stack", "select" if stack.split("/")[-1] in names else "init", stack)
+    # Stack listings can omit an existing stack. Let Pulumi resolve its exact
+    # name and create it only when it does not exist.
+    run("pulumi", "stack", "select", stack, "--create", "--non-interactive")
     cidr = os.environ.get("SAILD_SSH_CIDR")
     if not cidr:
         with urllib.request.urlopen("https://checkip.amazonaws.com", timeout=10) as r:
